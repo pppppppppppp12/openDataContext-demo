@@ -57,7 +57,7 @@ export default class Graphic extends Sprite {
         this.actions.push(new GraphicAction.rect(x, y, w, h));
         this.closePath();
         if(fillColor){
-            this.fill('rgba(0,0,0,0.6)');
+            this.fill('#ffffff');
         }
     }
     closePath() {
