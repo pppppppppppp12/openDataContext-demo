@@ -3,17 +3,20 @@ import GraphicAction    from './graphicAction';
 import Bitmap           from './bitmap';
 import Text             from './text';
 import Graphic          from './graphic';
-
+import Util             from './util'
+/**
+ * 绘制item条目，样式在此处修改
+ */
 export default class Item extends Sprite{
     constructor(width, height) {
         super();
         this._bgColor = '';
         this.size(width, height);
         
-        this.initHeadImgSprite();
-        this.initScoreSprite();
-        this.initNickSprite();
         this.initRankIndeSprite();
+        this.initHeadImgSprite();
+        this.initNickSprite();
+        this.initScoreSprite();
     }
     set bgColor(value){
         this._bgColor = value;
@@ -23,56 +26,58 @@ export default class Item extends Sprite{
     }
     addItemColorSprite(){
         let bg = new Graphic();
-        bg.drawRect(0, 0, this.width, this.height, 'rgba(0,0,0,0.4)');
+        bg.drawRect(0, 0, this.width, this.height, '#ffffff');
         bg.name = 'bg';
         this.addChildAt(bg, 0);
     }
-    initHeadImgSprite() {
-        this.img = new Bitmap();
-        this.img.width = 40;
-        this.img.height = 40;
-        this.img.x = 60;
-        this.img.y = (this.height - this.img.height) / 2;
-        this.addChild(this.img);
-    }
-    initScoreSprite() {
-        this.scoreText = new Text();
-        // this.scoreText.overflow = Laya.Text.HIDDEN;
-        this.scoreText.color = "#5fb8f7";
-        this.scoreText.fontSize = 14;
-        this.scoreText.x = 280;
-        this.scoreText.y = this.height / 2;
-        this.scoreText.width = 90;
-        this.scoreText.valign = 'middle';
-        this.scoreText.align = 'right';
-        this.addChild(this.scoreText);
-    }
-    initNickSprite() {
-        this.nickText = new Text();
-        // this.nickText.overflow = Laya.Text.HIDDEN;
-        this.nickText.color = "#5fb8f7";
-        this.nickText.fontSize = 14;
-        this.nickText.x = 120;
-        this.nickText.valign = 'middle';
-        this.nickText.y = this.height / 2;
-        this.addChild(this.nickText);
-    }
+    // 绘制排行序号
     initRankIndeSprite() {
         this.indexText = new Text();
-        // this.indexText.overflow = Laya.Text.HIDDEN;
-        this.indexText.fontSize = 28;
-        this.indexText.x = 30;
+        // ps: 排行序号样式
+        this.indexText.fontSize = Util.getSize(26);
+        this.indexText.width = Util.getSize(96);
+        this.indexText.x = Util.getSize(96) / 2;
         this.indexText.align = 'center';
         this.indexText.valign = 'middle';
         this.indexText.y = this.height / 2;
         this.addChild(this.indexText);
     }
-    setHeadImgSrc(src) {
-        this.img.src = src;
+    // 绘制头像
+    initHeadImgSprite() {
+        // ps: 头像样式
+        this.img = new Bitmap(true); // 裁剪成圆形
+        this.img.width = Util.getSize(70);
+        this.img.height = Util.getSize(70);
+        this.img.x = Util.getSize(96);
+        this.img.y = (this.height - this.img.height) / 2;
+        this.addChild(this.img);
     }
-    setNick(nick) {
-        this.nick.text = nick;
+    // 绘制昵称
+    initNickSprite() {
+        this.nickText = new Text();
+        // ps: 昵称样式
+        this.nickText.fontSize = Util.getSize(26);
+        this.nickText.width = Util.getSize(308)
+        this.nickText.x = this.img.x + this.img.width + Util.getSize(20);
+        this.nickText.color = "#333333";
+        this.nickText.valign = 'middle';
+        this.nickText.y = this.height / 2;
+        this.addChild(this.nickText);
     }
+    // 绘制分数
+    initScoreSprite() {
+        this.scoreText = new Text();
+        // ps: 分数样式
+        this.scoreText.color = "#a6a6a6";
+        this.scoreText.fontSize = Util.getSize(26);
+        this.scoreText.width = Util.getSize(126);
+        this.scoreText.x = this.nickText.x + this.nickText.width + Util.getSize(20) + Util.getSize(126) / 2;
+        this.scoreText.y = this.height / 2;
+        this.scoreText.valign = 'middle';
+        this.scoreText.align = 'center';
+        this.addChild(this.scoreText);
+    }
+    // 设置条目数据
     set dataSource(value){
         this.setData(value);
     }
@@ -81,9 +86,16 @@ export default class Item extends Sprite{
         this.nickText.text = data.nick + '';
         this.indexText.text = data.rank + '';
         this.img.skin = data.src;
-        this.indexText.color = data.rank < 4 ? 'red' : "#fff";
+        // ps: 排行序号颜色样式
+        this.indexText.color = data.rank < 4 ? '#fab818' : "#a6a6a6";
     }
-    setScore(score) {
-        this.score.text = score;
+    // 获取条目数据
+    getData() {
+        return {
+            indexText: this.indexText.text,
+            img: this.img.skin,
+            nickText: this.scoreText.text,
+            scoreText: this.scoreText.text
+        }
     }
 }
