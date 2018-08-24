@@ -3,20 +3,23 @@ import GraphicAction    from './graphicAction';
 import Bitmap           from './bitmap';
 import Item             from './item';
 import Box              from './box';
-
-
+import Util             from './util'
+/**
+ * 绘制列表，并监听滚动事件
+ */
 const MAX_OFFSET = 50;
 export default class ListView extends Sprite {
-    constructor(width, height, top) {
+    constructor(width, height) {
         super();
         this.width  = width || 300;
         this.height = height || 500;
-        this.top    = top || 100;
+        this.top    = 0
+        this.left   = 0
         this.render();
     }
     render() {
         let box = new Box(this.width, this.height);
-        box.pos((GameGlobal.width - this.width) / 2, this.top);
+        box.pos(this.left, this.top);
         this.addChild(box);
 
         this.list = new List(this.width, this.height);
@@ -29,12 +32,13 @@ export default class ListView extends Sprite {
 class List extends Sprite {
     constructor(w, h) {
         super();
-        this.repeatY = 8;
-        this.repeatX = 1;
         this.dataSource = [];
         this.width = w;
         this.height = h;
-        this.itemHeight = 60;
+        // ps: 初始化每个条目的高度
+        this.itemHeight = Util.getSize(110);
+        this.repeatX = 1;
+        this.repeatY = Math.ceil(this.height / this.itemHeight);
         this._startIndex = 0;
         this.cells = [];
         this.scrollY = 0;
@@ -55,7 +59,8 @@ class List extends Sprite {
     set array(value) {
         this.dataSource = value;
         this.renderItems();
-        this.setContentSize();
+        // 滚动视图高度在new时初始化，这里不再改变
+        // this.setContentSize();
     }
     renderItems(cell, index) {
         this.dataSource.forEach((it, index) => {
@@ -71,7 +76,7 @@ class List extends Sprite {
             this.addChild(item);
             this.cells.push(item);
         });
-        this.height = this.repeatY * this.itemHeight;
+        // this.height = this.repeatY * this.itemHeight;
         this.totalHeight = this.dataSource.length * this.itemHeight;
     }
     updateItem(scrollValue) {
@@ -92,8 +97,15 @@ class List extends Sprite {
         if (!num) return;
 
         var cellIndex = 0;
+        var flag = true
         for (var i = 0; i < num; i++) {
             if (down) {
+                // 滑动到最后一条，防止再添加条目
+                if (this.cells[this.cells.length - 1] && this.cells[this.cells.length - 1].getData()
+                    && Number(this.cells[this.cells.length - 1].getData().indexText) >= this.dataSource.length) {
+                        flag = true
+                        break
+                    }
                 var cell = this.cells.shift();
                 this.cells.push(cell);
                 cellIndex = this.cells.length;
@@ -101,14 +113,23 @@ class List extends Sprite {
                 cell = this.cells.pop();
                 this.cells.unshift(cell);
             }
-            var pos = (toIndex - i) * this.itemHeight;
+            let checkToIndex = toIndex // 防止因为滑动过快导致的位置错乱问题
+            const currIndex = Number(cell.getData().indexText)
+            if (down && checkToIndex !== currIndex + this.repeatY) {
+                checkToIndex = currIndex + this.repeatY
+            } else if (!down && checkToIndex !== currIndex - this.repeatY - 2) {
+                checkToIndex = currIndex - this.repeatY - 2
+            }
+            var pos = checkToIndex * this.itemHeight;
             cell.y = pos;
         }
+        if (!flag) return
         this.cells.forEach((it, i) => {
             this.updateItemData(this.dataSource[i + index], i);
         });
     }
     updateItemData(cell, cellIndex) {
+        if (!cell) return
         this.cells[cellIndex].dataSource = cell;
     }
     canDragable(x, y) {
@@ -173,7 +194,7 @@ class List extends Sprite {
         let start = 0,
             begin = 0,
             distance = 0,
-            during = 40,
+            during = 30,
             speed;
 
         wx.onTouchEnd(function(e) {
