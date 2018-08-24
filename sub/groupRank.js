@@ -3,34 +3,48 @@ import Text     from './canvas/text';
 import Bitmap   from './canvas/bitmap';
 import ListView from './canvas/list';
 import Box      from './canvas/box';
+import Util     from './canvas/util' 
 
 const sysInfo = wx.getSystemInfoSync();
 GameGlobal.height = sysInfo.windowHeight;
 GameGlobal.width = sysInfo.windowWidth;
 
 export default class GroupRank {
-    constructor(stage) {
+    /**
+     * @param stage
+     * @param scrollHeight 滚动视图的 可视区域高度
+     */
+    constructor(stage, scrollHeight, shareTicket) {
+        this.scrollHeight = scrollHeight
         this.stage = stage;
         this.visible = true;
-        this.getFriendData();
+        this.getGroupData();
     }
     update() {
 
     }
     getGroupData() {
-        if (!wx.getGroupCloudStorage) return [];
-        wx.getGroupCloudStorage({
-            keyList: ['score'],
-            shareTicket: '',
-            success: res => {
-                if (!res.data.length) return;
-                this.list = res.data;
-                this.render();
-            },
-            fail: err => {
-
+        this.list = [
+            {
+                key: 1,
+                nickname: "1111111111",
+                src: 'https://wx.qlogo.cn/mmopen/vi_32/Ogia9Flzb3icFGTA9icRNHWqDQPMqQN45N3O3qiamsCpicFg63rovLTMTK49EiaGuEkDvONGe66by6dKiabjl1zqbIbnQ/132',
+                score: 10000
             }
-        });
+        ]
+        // if (!wx.getGroupCloudStorage) return [];
+        // wx.getGroupCloudStorage({
+        //     keyList: ['score'],
+        //     shareTicket: '',
+        //     success: res => {
+        //         if (!res.data.length) return;
+        //         this.list = res.data;
+                this.render();
+        //     },
+        //     fail: err => {
+
+        //     }
+        // });
     }
     render() {
         if (!this.visible) return
@@ -38,43 +52,46 @@ export default class GroupRank {
 
         // 测试数据
         for (var i = 0; i < 100; i++) {
-            this.list.push(this.list[0]);
+            const newObj = {
+                ...this.list[0]
+            }
+            newObj.key = this.list[this.list.length - 1].key + 1
+            this.list.push(newObj);
         }
 
         let data = this.getSortedListData();
 
-        this.renderBackground();
         this.renderList(data);
-        this.renderTitle();
-    }
-    renderList(data){
-        let box = new Box(300, 500);
-        box.pos(0, 0);
-
-        let _list = new ListView();
-        _list.array = data;
-
-        box.addChild(_list);
-        this.stage.addChild(box);
+        // this.renderBackground();
+        // this.renderTitle();
     }
     getSortedListData(){
         let data = [];
         this.list.forEach((it, index) => {
             data.push({
-                score: it.score,
-                nick: it.nickname,
-                src: it.avatarUrl
+                rank: Number(it.key),            // 排名
+                nick: it.nickname,               // 昵称
+                src: it.src,                     // 头像链接
+                score: Math.floor(it.score)      // 分数
             });
         });
-
+        // 按分数排序
         data.sort((a, b) => {
             return b.score - a.score
         });
-
         data.forEach((it, index) => {
             it.rank = ++index
         });
         return data
+    }
+    renderList(data){
+        // ps: 初始化容器和列表 宽高，高度为 滚动视图可视区域的高度
+        let box = new Box(Util.getSize(640), this.scrollHeight);
+        let _list = new ListView(Util.getSize(640), this.scrollHeight);
+        _list.array = data;
+
+        box.addChild(_list);
+        this.stage.addChild(box);
     }
     renderTitle(){
         let title = new Text();
@@ -88,9 +105,7 @@ export default class GroupRank {
     }
     renderBackground() {
         let background = new Graphic();
-        background.pos(0, 0);
-        background.rect(0, 0, this.stage.width, this.stage.height);
-        background.fill('rgba(0,0,0,0.6)');
+        background.drawRect(0, 0, this.stage.width, this.stage.height, 'rgba(0,0,0,0.6)');
         this.stage.addChild(background);
     }
 }
